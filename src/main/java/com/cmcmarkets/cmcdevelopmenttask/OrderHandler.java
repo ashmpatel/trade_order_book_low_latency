@@ -19,13 +19,23 @@ public interface OrderHandler {
      * of your OrderHandler implementation.
      */
     static OrderHandler createInstance() {
-        return new OrderHandlerImpl();
+        return new OrderHandlerImpl3();
     }
 
     /* ive added this for testing purposes but not needed otherwise */
-    Map<IntValue, Map>  getBuyOrders();
+    long getBuyOrders();
 
-    Map<IntValue, Map>  getSellOrders();
+    long getSellOrders();
 
+
+    int getBuyPriceFor(String symbol, long orderId);
+
+    int getSellPriceFor(String symbol, long orderId);
+
+    int getBuyQuantityFor(String symbol, int price);
+
+    int getSellQuantityFor(String symbol, int price);
+
+    long getOrderId(String symbol, int price);
 
 }

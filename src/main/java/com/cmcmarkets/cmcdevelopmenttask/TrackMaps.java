@@ -12,6 +12,11 @@ public class TrackMaps {
     private ChronicleMap<String, IntValue> ordersTotal = null;
     private ChronicleMap<LongValue, IntValue> totalForOrders = null;
     private ChronicleMap<LongValue, String> order = null;
+
+    public void setSymbolToSetOfOrderId(ChronicleMap<String, Map> symbolToSetOfOrderId) {
+        this.symbolToSetOfOrderId = symbolToSetOfOrderId;
+    }
+
     private ChronicleMap<String, Map> symbolToSetOfOrderId = null;
     private Map<String, ReentrantReadWriteLock> locks;
     private Side buyOrSell;

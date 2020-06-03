@@ -92,6 +92,24 @@ public class OrderHandlerImpl2 implements OrderHandler {
         SELL_SIDE_MAPS = new TrackMaps(sell_orders_total,  sell_total_for_order, sell_order, sellSymbolToSetOfOrderId, sellSidelocks, Side.SELL);
     }
 
+    public OrderHandlerImpl2() {
+        buy_orders_total.clear();
+        // order id to the SYMBOL:PRICE:Buy/Sell
+        buy_order.clear();
+        // total quantity for each unique order
+        buy_total_for_order.clear();
+        // SYmbol-> map(orderid, price)
+        buySymbolToSetOfOrderId.clear();
+
+        sell_orders_total.clear();
+        sell_order.clear();
+        sell_total_for_order.clear();
+        sellSymbolToSetOfOrderId.clear();
+
+        // reduce contention by separating the buy and sell lock sides
+        buySideLocks.clear();
+        sellSidelocks.clear();
+    }
 
     public static void main(String args[]) {
         OrderHandler orderHandler = new OrderHandlerImpl2();
@@ -242,9 +260,12 @@ public class OrderHandlerImpl2 implements OrderHandler {
 
             // map order id to its new Price
             getMapsToUse.getOrder().replace(orderId, oldSymbolLabel);
+            Map<Long,Integer> orderIdToPrice=  getMapsToUse.getSymbolToSetOfOrderId().get(oldSymbol);
 
             // update the price for this symbol->orderid->price
-            getMapsToUse.getSymbolToSetOfOrderId().get(oldSymbol).replace(orderModification.getOrderId(), orderModification.getNewPrice());
+            orderIdToPrice.replace(orderModification.getOrderId(), orderModification.getNewPrice());
+            ChronicleMap<String, Map> temp = getMapsToUse.getSymbolToSetOfOrderId();
+            temp.replace(oldSymbol,orderIdToPrice);
         } finally {
             writeLock.unlock();
         }
@@ -414,13 +435,41 @@ public class OrderHandlerImpl2 implements OrderHandler {
     }
 
     //* accessors for debugging */
-    public Map<IntValue, Map>  getBuyOrders() {
-       return null;
+    public long  getBuyOrders() {
+       return buy_total_for_order.size();
     }
 
-    public Map<IntValue, Map>   getSellOrders() {
-        return null;
+    public long getSellOrders() {
+        return sell_total_for_order.size();
 
+    }
+
+    public int getBuyPriceFor(String symbol, long orderId){
+        Map<Long,Integer> orderIdToPrice= buySymbolToSetOfOrderId.get(symbol);
+        return orderIdToPrice.get(orderId);
+    }
+
+    public int getSellPriceFor(String symbol, long orderId){
+        LongValue orderIdL= Values.newHeapInstance(LongValue.class);;
+        orderIdL.setValue(orderId);
+        Map<Long,Integer> orderIdToPrice= sellSymbolToSetOfOrderId.get(symbol);
+        return orderIdToPrice.get(orderIdL);
+    }
+
+    public int getBuyQuantityFor(String symbol, int price) {
+        return buy_orders_total.get(createSymbol(symbol,price)).getValue();
+    }
+
+    public int getSellQuantityFor(String symbol, int price) {
+        return sell_orders_total.get(createSymbol(symbol,price)).getValue();
+    }
+
+    public long getOrderId(String symbol, int price) {
+        Map<Long,Integer> orders= buySymbolToSetOfOrderId.get(symbol);
+        for ( Long orderId: orders.keySet()) {
+            if (orders.get(orderId)== price) return orderId;
+        }
+        return 0;
     }
 
 }

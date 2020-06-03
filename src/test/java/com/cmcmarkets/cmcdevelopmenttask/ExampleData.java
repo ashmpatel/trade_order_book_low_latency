@@ -1,8 +1,5 @@
 package com.cmcmarkets.cmcdevelopmenttask;
 
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
@@ -76,33 +73,33 @@ public class ExampleData {
     // test for single case add BUY but look for SELL
     public void testAddingASingleBUYOrderResultinOneEntry() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
+        long testData=orderHandler.getBuyOrders();
 
-        assertEquals("One entry in buy orders",true, testData.size()==1);
+        assertEquals("One entry in buy orders",true, testData==1);
     }
 
     @Test
     public void testAddingASingleSELLOrderResultsiOneEntry() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
+        long testData=orderHandler.getSellOrders();
 
-        assertEquals("One entry in sell orders",true, testData.size()==1);
+        assertEquals("One entry in sell orders",true, testData==1);
     }
 
     @Test
     public void testWhenBuyOrderIsPlacedSellOrdersAreNotAffected() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
+        long testData= testData=orderHandler.getSellOrders();
 
-        assertEquals("No entry in SELL orders",true, testData.size()==0);
+        assertEquals("No entry in SELL orders",true, testData==0);
     }
 
     @Test
     public void testWhenSellOrderIsPlacedBuyOrdersAreNotAffected() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
+        long testData = testData=orderHandler.getBuyOrders();
 
-        assertEquals("No entry in BUY orders",true, testData.size()==0);
+        assertEquals("No entry in BUY orders",true, testData==0);
     }
 
     @Test
@@ -110,9 +107,9 @@ public class ExampleData {
     public void testAddDupeOrderIdSellSide() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 25, 8));
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
+        long testData =orderHandler.getSellOrders();
 
-        assertEquals("One entry in sell orders",true, testData.size()==1);
+        assertEquals("One entry in sell orders",true, testData==1);
     }
 
 
@@ -121,9 +118,9 @@ public class ExampleData {
     public void testAddDupeOrderIdBuySide() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 25, 8));
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
+        long testData=orderHandler.getBuyOrders();
 
-        assertEquals("One entry in buy orders",true, testData.size()==1);
+        assertEquals("One entry in buy orders",true, testData==1);
     }
 
     @Test
@@ -132,7 +129,7 @@ public class ExampleData {
         orderHandler.addOrder(new Order(2L, "MSFT", Side.SELL, 25, 8));
 
         double currentPrice= orderHandler.getCurrentPrice("MSFT", 6, Side.SELL);
-        assertEquals("Price is 19",0, Double.compare(currentPrice,19));
+        assertEquals("Price is 19.0",0, Double.compare(currentPrice,19.0));
 
     }
 
@@ -141,11 +138,11 @@ public class ExampleData {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
         orderHandler.addOrder(new Order(2L, "MSFT", Side.SELL, 25, 8));
 
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
+        long testData=orderHandler.getSellOrders();
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("MSFT".hashCode());
 
-        assertEquals("Size is 2",true, testData.get(symbol).size()==2);
+        assertEquals("Size is 2",true, testData==2);
 
     }
 
@@ -154,61 +151,49 @@ public class ExampleData {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
         orderHandler.addOrder(new Order(2L, "MSFT", Side.BUY, 25, 8));
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
+        long testData=orderHandler.getBuyOrders();
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("MSFT".hashCode());
 
-        assertEquals("Size is 2",true, testData.get(symbol).size()==2);
+        assertEquals("Size is 2",true, testData==2);
 
     }
 
     @Test
     public void testAddingTwoSellOrdersForDiffSymbolsCountCheck() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
-        orderHandler.addOrder(new Order(2L, "TRI", Side.SELL, 25, 8));
+        orderHandler.addOrder(new Order(2L, "TRI", Side.SELL, 25, 18));
 
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
-        IntValue symbol = Values.newHeapInstance(IntValue.class);
-        symbol.setValue("MSFT".hashCode());
-        int sizeOne = testData.get(symbol).size();
+        long sizeOne=orderHandler.getSellQuantityFor("MSFT", 19);
 
-        symbol.setValue("TRI".hashCode());
-        int sizeTwo = testData.get(symbol).size();
+        long sizeTwo=orderHandler.getSellQuantityFor("TRI", 25);
 
-        assertEquals("Size is 2 when we place different SELL orders",true, sizeOne==1 && sizeTwo==1 );
+
+        assertEquals("Size is 1 when we place different SELL orders",true, sizeOne==8 && sizeTwo==18 );
 
     }
 
     @Test
     public void testAddingTwoBuyOrdersForDiffSymbolsCountCheck() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
-        orderHandler.addOrder(new Order(2L, "TRI", Side.BUY, 25, 8));
+        orderHandler.addOrder(new Order(2L, "TRI", Side.BUY, 25, 80));
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
-        IntValue symbol = Values.newHeapInstance(IntValue.class);
-        symbol.setValue("MSFT".hashCode());
-        int sizeOne = testData.get(symbol).size();
+        long sizeOne=orderHandler.getBuyQuantityFor("MSFT", 19);
 
-        symbol.setValue("TRI".hashCode());
-        int sizeTwo = testData.get(symbol).size();
+        long sizeTwo=orderHandler.getBuyQuantityFor("TRI", 25);
 
-        assertEquals("Size is 2 when we place different BUY orders",true, sizeOne==1 && sizeTwo==1 );
+        assertEquals("Size is 2 when we place different BUY orders",true, sizeOne==8 && sizeTwo==80 );
 
     }
 
     @Test
     public void testAddingTwoBuyOrdersForDiffBuyAndSellCountCheck() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
-        orderHandler.addOrder(new Order(2L, "TRI", Side.SELL, 25, 8));
+        orderHandler.addOrder(new Order(2L, "MSFT", Side.SELL, 25, 8));
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
-        IntValue symbol = Values.newHeapInstance(IntValue.class);
-        symbol.setValue("MSFT".hashCode());
-        int sizeOne = testData.get(symbol).size();
+        long sizeOne=orderHandler.getBuyOrders();
 
-        testData=orderHandler.getSellOrders();
-        symbol.setValue("TRI".hashCode());
-        int sizeTwo = testData.get(symbol).size();
+        long sizeTwo=orderHandler.getSellOrders();
 
         assertEquals("Size is 2 when we place different BUY orders",true, sizeOne==1 && sizeTwo==1 );
 
@@ -217,10 +202,10 @@ public class ExampleData {
     @Test
     public void testRemoveOrderWhenNoneExists() {
         orderHandler.removeOrder(1L);
-        Map<IntValue, Map> testDataBuy=orderHandler.getBuyOrders();
-        Map<IntValue, Map> testDataSell=orderHandler.getSellOrders();
+        long testDataBuy=orderHandler.getBuyOrders();
+        long testDataSell=orderHandler.getSellOrders();
 
-        assertEquals("Size is 0 for both buy and sell",true, testDataBuy.size()==0 && testDataSell.size()==0);
+        assertEquals("Size is 0 for both buy and sell",true, testDataBuy==0 && testDataSell==0);
 
     }
 
@@ -233,14 +218,12 @@ public class ExampleData {
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("TRI".hashCode());
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
-        // this will be 0 as we only had 1 order and we removed it
-        Map sizeOne = (Map)testData.get(symbol);
+        long sizeOne=orderHandler.getBuyOrders();
 
-        testData=orderHandler.getSellOrders();
-        int sizeTwo = testData.size();
+        long sizeTwo=orderHandler.getSellOrders();
 
-        assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==0 && sizeTwo==0 );
+
+        assertEquals("Size is 0 for both buy and sell",true, sizeOne==0 && sizeTwo==0 );
 
     }
 
@@ -253,14 +236,12 @@ public class ExampleData {
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("TRI".hashCode());
 
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
-        // this will be 0 as we only had 1 order and we removed it
-        Map sizeOne = (Map)testData.get(symbol);
+        long sizeOne=orderHandler.getSellOrders();
 
-        testData=orderHandler.getBuyOrders();
-        int sizeTwo = testData.size();
+        long sizeTwo=orderHandler.getBuyOrders();
 
-        assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==0 && sizeTwo==0 );
+
+        assertEquals("Size is 0 for both buy and sell",true, sizeOne ==0 && sizeTwo==0 );
 
     }
 
@@ -275,35 +256,28 @@ public class ExampleData {
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("TRI".hashCode());
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
-        // this will be 0 as we only had 1 order and we removed it
-        Map sizeOne = (Map)testData.get(symbol);
+        long sizeOne=orderHandler.getBuyOrders();
 
-        testData=orderHandler.getSellOrders();
-        int sizeTwo = testData.size();
+        long sizeTwo=orderHandler.getSellOrders();
 
-        assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==0 && sizeTwo==1 );
+
+        assertEquals("Size is 0 for both buy and sell",true, sizeOne==0 && sizeTwo==1 );
 
     }
 
     @Test
     public void testRemoveOrderWhenOneExistsBuyLeaveBuyUntouched() {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 11, 8));
-        orderHandler.addOrder(new Order(2L, "TRI", Side.BUY, 25, 8));
+        orderHandler.addOrder(new Order(2L, "MSFT", Side.BUY, 25, 8));
 
         orderHandler.removeOrder(1L);
 
-        IntValue symbol = Values.newHeapInstance(IntValue.class);
-        symbol.setValue("MSFT".hashCode());
+        long sizeOne=orderHandler.getSellOrders();
 
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
-        // this will be 0 as we only had 1 order and we removed it
-        Map sizeOne = (Map)testData.get(symbol);
+        long sizeTwo=orderHandler.getBuyOrders();
 
-        testData=orderHandler.getBuyOrders();
-        int sizeTwo = testData.size();
 
-        assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==0 && sizeTwo==1 );
+        assertEquals("Size is 0 for both buy and sell",true, sizeOne==0 && sizeTwo==1 );
 
     }
 
@@ -311,12 +285,8 @@ public class ExampleData {
     public void testRemoveOrderWhenExists() {
         orderHandler.removeOrder(7L);
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
-
-        int sizeOne = testData.size();
-
-        testData=orderHandler.getSellOrders();
-        int sizeTwo = testData.size();
+        long sizeOne=orderHandler.getBuyOrders();
+        long sizeTwo=orderHandler.getSellOrders();
 
         assertEquals("Size is 0 for both buy and sell",true, sizeOne==0 && sizeTwo==0 );
 
@@ -327,23 +297,20 @@ public class ExampleData {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.BUY, 19, 8));
         orderHandler.modifyOrder(new OrderModification(1L, 15, 10));
 
-        Map<IntValue, Map> testData=orderHandler.getBuyOrders();
+        long sizeOne=orderHandler.getBuyOrders();
+        long sizeTwo=orderHandler.getSellOrders();
 
-        IntValue symbol = Values.newHeapInstance(IntValue.class);
-        symbol.setValue("MSFT".hashCode());
+        long price=orderHandler.getBuyPriceFor("MSFT", 1L);
+        long quantity=orderHandler.getBuyQuantityFor("MSFT", 15);
+        long orderId= orderHandler.getOrderId("MSFT", 15);
 
-        Set sizeOne = (Set)testData.get(symbol).get(15);
-        Iterator iter= sizeOne.iterator();
-        AccumulatedOrder retrievedOrder= (AccumulatedOrder) iter.next();
 
-        assertEquals(true,retrievedOrder.getPrice()==15);
-        assertEquals(true,retrievedOrder.getTotalQuantity()==10);
-        assertEquals(true,retrievedOrder.getOrderId()==1L);
+        assertEquals(true,price==15);
+        assertEquals(true,quantity==10);
+        assertEquals(true,orderId==1L);
 
-        testData=orderHandler.getSellOrders();
-        int sizeTwo = testData.size();
 
-        assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==1 && sizeTwo==0 );
+        assertEquals("Size is 0 for both buy and sell",true, sizeOne==1 && sizeTwo==0 );
 
     }
 
@@ -352,11 +319,11 @@ public class ExampleData {
         orderHandler.addOrder(new Order(1L, "MSFT", Side.SELL, 19, 8));
         orderHandler.modifyOrder(new OrderModification(1L, 15, 10));
 
-        Map<IntValue, Map> testData=orderHandler.getSellOrders();
+        long testData=orderHandler.getSellOrders();
 
         IntValue symbol = Values.newHeapInstance(IntValue.class);
         symbol.setValue("MSFT".hashCode());
-
+/*
         Set sizeOne = (Set)testData.get(symbol).get(15);
         Iterator iter= sizeOne.iterator();
         AccumulatedOrder retrievedOrder= (AccumulatedOrder) iter.next();
@@ -366,9 +333,10 @@ public class ExampleData {
         assertEquals(true,retrievedOrder.getOrderId()==1L);
 
         testData=orderHandler.getBuyOrders();
-        int sizeTwo = testData.size();
+        int sizeTwo = testData;
 
         assertEquals("Size is 0 for both buy and sell",true, sizeOne.size()==1 && sizeTwo==0 );
+*/
 
     }
 

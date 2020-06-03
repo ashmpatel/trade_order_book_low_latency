@@ -1,7 +1,6 @@
 package com.cmcmarkets.cmcdevelopmenttask;
 
 import com.sun.tools.javac.util.Pair;
-import net.openhft.chronicle.core.values.IntValue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -19,9 +18,9 @@ public class OrderHandlerImpl3 implements OrderHandler {
     private static TrackMaps2 BUY_SIDE_MAPS = null;
     private static TrackMaps2 SELL_SIDE_MAPS = null;
 
-    // SYMBOL:Price:buy/Sell -> Total Quantity
+    // SYMBOL:Price -> Total Quantity
     private static final Map<String, Integer> buy_orders_total = new ConcurrentHashMap<>();
-    // order id to the SYMBOL:PRICE:Buy/Sell
+    // order id to the SYMBOL:PRICE
     private static final Map<Long, String> buy_order = new ConcurrentHashMap<>();
     // total quantity for each unique order
     private static final Map<Long, Integer> buy_total_for_order = new ConcurrentHashMap<>();
@@ -42,7 +41,48 @@ public class OrderHandlerImpl3 implements OrderHandler {
         SELL_SIDE_MAPS = new TrackMaps2(sell_orders_total,  sell_total_for_order, sell_order, sellSymbolToSetOfOrderId, sellSidelocks, Side.SELL);
     }
 
+    public int getBuyPriceFor(String symbol, long orderId){
+        return buySymbolToSetOfOrderId.get(symbol).get(orderId);
+    }
 
+    public int getSellPriceFor(String symbol, long orderId){
+        return sellSymbolToSetOfOrderId.get(symbol).get(orderId);
+    }
+
+    public int getBuyQuantityFor(String symbol, int price) {
+        return buy_orders_total.get(createSymbol(symbol,price));
+    }
+
+    public int getSellQuantityFor(String symbol, int price) {
+        return sell_orders_total.get(createSymbol(symbol,price));
+    }
+
+    public long getOrderId(String symbol, int price) {
+        Map<Long,Integer> orders= buySymbolToSetOfOrderId.get(symbol);
+        for ( Long orderId: orders.keySet()) {
+            if (orders.get(orderId)== price) return orderId;
+        }
+        return 0;
+    }
+
+    public OrderHandlerImpl3() {
+        buy_orders_total.clear();
+        // order id to the SYMBOL:PRICE:Buy/Sell
+        buy_order.clear();
+        // total quantity for each unique order
+        buy_total_for_order.clear();
+        // SYmbol-> map(orderid, price)
+        buySymbolToSetOfOrderId.clear();
+
+        sell_orders_total.clear();
+        sell_order.clear();
+        sell_total_for_order.clear();
+        sellSymbolToSetOfOrderId.clear();
+
+        // reduce contention by separating the buy and sell lock sides
+        buySideLocks.clear();
+        sellSidelocks.clear();
+    }
 
     public static void main(String args[]) {
         OrderHandler orderHandler = new OrderHandlerImpl2();
@@ -324,14 +364,13 @@ public class OrderHandlerImpl3 implements OrderHandler {
         return symbolName + SEPARATOR + price;
     }
 
-
     //* accessors for debugging */
-    public Map<IntValue, Map>  getBuyOrders() {
-        return null;
+    public long  getBuyOrders() {
+        return buy_total_for_order.size();
     }
 
-    public Map<IntValue, Map>  getSellOrders() {
-        return null;
+    public long getSellOrders() {
+        return sell_total_for_order.size();
 
     }
 

@@ -1,6 +1,5 @@
 package com.cmcmarkets.cmcdevelopmenttask;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 public class Order  {

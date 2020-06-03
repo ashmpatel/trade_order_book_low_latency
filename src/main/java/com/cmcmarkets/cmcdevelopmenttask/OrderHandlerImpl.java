@@ -1,5 +1,6 @@
 package com.cmcmarkets.cmcdevelopmenttask;
 
+import com.sun.jdi.Accessible;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
@@ -342,7 +343,6 @@ public class OrderHandlerImpl implements OrderHandler {
                 if (allOrdersForThisPrice.size()==0) {
                     allOrdersForSymbolAndPrice.remove(price);
                     mapForOrderIdToSymbol.remove(orderToRemove.getOrderId());
-
                 } else {
                     allOrdersForSymbolAndPrice.replace(price, allOrdersForThisPrice);
                 }
@@ -350,7 +350,9 @@ public class OrderHandlerImpl implements OrderHandler {
             }
             return value;
         });
-
+        if (mapToUpdate.get(symbolHash).size()==0) {
+            mapToUpdate.remove(symbolHash);
+        }
     }
 
 
@@ -435,20 +437,80 @@ public class OrderHandlerImpl implements OrderHandler {
     }
 
     //* accessors for debugging */
-    public Map<IntValue, Map>  getBuyOrders() {
-        return buy_orders;
+    public long  getBuyOrders() {
+        if (buy_orders==null || buy_orders.size()==0) return 0L;
+        return buy_orders.get(genHash("MSFT"))==null ? 0 : buy_orders.get(genHash("MSFT")).size();
     }
 
-    public Map<IntValue, Map>  getSellOrders() {
-        return sell_orders;
+    public long getSellOrders() {
+        if (sell_orders==null || sell_orders.size()==0) return 0L;
+        return sell_orders.get(genHash("MSFT"))==null ? 0 : sell_orders.get(genHash("MSFT")).size();
     }
 
-    public Map<Long, String>  getOrderIdToSymbolBuy() {
-        return mapForOrdeIdToSymbolsBuySide;
+    @Override
+    public int getBuyPriceFor(String symbol, long orderId) {
+        int buyPrice=0;
+        String symbolToLookFor= mapForOrdeIdToSymbolsBuySide.get(orderId);
+        Map<Integer, Set<AccumulatedOrder>> buyOrdersTemp = buy_orders.get(genHash(symbolToLookFor));
+        for (Integer price: buyOrdersTemp.keySet()) {
+            Set<AccumulatedOrder> orders = buyOrdersTemp.get(price);
+            for (AccumulatedOrder order: orders) {
+                if (order.getOrderId() == orderId) buyPrice = order.getPrice();
+            }
+        }
+        return buyPrice;
     }
 
-    public Map<Long, String>  getOrderIdToSymbolSell() {
-        return mapForOrdeIdToSymbolsSellSide;
+    @Override
+    public int getSellPriceFor(String symbol, long orderId) {
+        int buyPrice=0;
+        String symbolToLookFor= mapForOrdeIdToSymbolsSellSide.get(orderId);
+        Map<Integer, Set<AccumulatedOrder>> buyOrdersTemp = sell_orders.get(genHash(symbolToLookFor));
+        for (Integer price: buyOrdersTemp.keySet()) {
+            Set<AccumulatedOrder> orders = buyOrdersTemp.get(price);
+            for (AccumulatedOrder order: orders) {
+                if (order.getOrderId() == orderId) buyPrice = order.getPrice();
+            }
+        }
+        return buyPrice;
     }
 
+    @Override
+    public int getBuyQuantityFor(String symbol, int price) {
+        Long quantity = 0L;
+        Map<Integer, Set<AccumulatedOrder>> buyOrdersTemp = buy_orders.get(genHash(symbol));
+        for (Integer priceForOrder: buyOrdersTemp.keySet()) {
+            Set<AccumulatedOrder> orders = buyOrdersTemp.get(priceForOrder);
+            for (AccumulatedOrder order: orders) {
+                if (order.getPrice() == price) quantity = order.getTotalQuantity();
+            }
+        }
+        return quantity.intValue();
+    }
+
+    @Override
+    public int getSellQuantityFor(String symbol, int price) {
+        Long quantity = 0L;
+        Map<Integer, Set<AccumulatedOrder>> buyOrdersTemp = sell_orders.get(genHash(symbol));
+        for (Integer priceForOrder: buyOrdersTemp.keySet()) {
+            Set<AccumulatedOrder> orders = buyOrdersTemp.get(priceForOrder);
+            for (AccumulatedOrder order: orders) {
+                if (order.getPrice() == price) quantity = order.getTotalQuantity();
+            }
+        }
+        return quantity.intValue();
+    }
+
+    @Override
+    public long getOrderId(String symbol, int price) {
+        Long orderId = 0L;
+        Map<Integer, Set<AccumulatedOrder>> buyOrdersTemp = buy_orders.get(genHash(symbol));
+        for (Integer priceForOrder: buyOrdersTemp.keySet()) {
+            Set<AccumulatedOrder> orders = buyOrdersTemp.get(priceForOrder);
+            for (AccumulatedOrder order: orders) {
+                if (order.getPrice() == price) orderId = order.getOrderId();
+            }
+        }
+        return orderId;
+    }
 }
